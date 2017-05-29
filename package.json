@@ -103,5 +103,5 @@
     "deploy-status": "gulp deploy-status",
     "deploy-set-version": "gulp deploy-set-version"
   },
-  "pre-commit":["eslint"]
+  "pre-commit":["test"]
 }
