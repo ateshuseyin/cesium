@@ -260,7 +260,6 @@ function isFixed(file) {
 gulp.task('eslint-fix', function() {
     gulp.src(eslintFiles, {base : './'})
         .pipe(eslint({fix : true}))
-        .pipe(eslint.format())
         .pipe(gulpIf(isFixed, gulp.dest('./')));
 });
 
