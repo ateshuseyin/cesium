@@ -81,7 +81,7 @@ define([
          */
         vertexShaderSource : {
             get : function() {
-                return this._vertexShaderSource;
+                return this._vertexShaderSource
             }
         },
 
@@ -97,7 +97,7 @@ define([
          */
         fragmentShaderSource : {
             get : function() {
-                return this._fragmentShaderSource;
+                return this._fragmentShaderSource
             }
         },
 
@@ -111,7 +111,7 @@ define([
          */
         renderState : {
             get : function() {
-                return this._renderState;
+                return this._renderState
             }
         },
 
