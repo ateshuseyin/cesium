@@ -19,6 +19,7 @@ var glslStripComments = require('glsl-strip-comments');
 var mkdirp = require('mkdirp');
 var eventStream = require('event-stream');
 var gulp = require('gulp');
+var gulpIf = require('gulp-if');
 var gulpInsert = require('gulp-insert');
 var gulpZip = require('gulp-zip');
 var gulpRename = require('gulp-rename');
@@ -249,6 +250,18 @@ gulp.task('eslint-watch', function() {
             .pipe(eslint())
             .pipe(eslint.format());
     });
+});
+
+function isFixed(file) {
+    // Has ESLint fixed the file contents?
+    return file.eslint !== null && file.eslint.fixed;
+}
+
+gulp.task('eslint-fix', function() {
+    gulp.src(eslintFiles, {base : './'})
+        .pipe(eslint({fix : true}))
+        .pipe(eslint.format())
+        .pipe(gulpIf(isFixed, gulp.dest('./')));
 });
 
 gulp.task('makeZipFile', ['release'], function() {
