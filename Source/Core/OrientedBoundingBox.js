@@ -182,7 +182,7 @@ define([
         v3 = Cartesian3.multiplyByScalar(v3, 0.5 * (l3 + u3), v3);
 
         var center = Cartesian3.add(v1, v2, result.center);
-        center = Cartesian3.add(center, v3, center);
+        Cartesian3.add(center, v3, center);
 
         var scale = scratchCartesian3;
         scale.x = u1 - l1;
@@ -199,6 +199,7 @@ define([
     /**
      * Computes an OrientedBoundingBox given extents in the east-north-up space of the tangent plane.
      *
+     * @param {Plane} tangentPlane The tangent place corresponding to east-north-up.
      * @param {Number} minimumX Minimum X extent in tangent plane space.
      * @param {Number} maximumX Maximum X extent in tangent plane space.
      * @param {Number} minimumY Minimum Y extent in tangent plane space.

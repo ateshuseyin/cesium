@@ -89,10 +89,10 @@ define([
      *     credit : new Cesium.Credit('U. S. Geological Survey')
      * });
      * viewer.imageryLayers.addImageryProvider(shadedRelief2);
-     * 
+     *
      * @see ArcGisMapServerImageryProvider
      * @see BingMapsImageryProvider
-     * @see GoogleEarthImageryProvider
+     * @see GoogleEarthEnterpriseMapsProvider
      * @see createOpenStreetMapImageryProvider
      * @see SingleTileImageryProvider
      * @see createTileMapServiceImageryProvider
@@ -432,6 +432,7 @@ define([
      * @param {Number} x The tile X coordinate.
      * @param {Number} y The tile Y coordinate.
      * @param {Number} level The tile level.
+     * @param {Request} [request] The request object. Intended for internal use only.
      * @returns {Promise.<Image|Canvas>|undefined} A promise for the image that will resolve when the image is available, or
      *          undefined if there are too many active requests to the server, and the request
      *          should be retried later.  The resolved image may be either an
@@ -439,9 +440,9 @@ define([
      *
      * @exception {DeveloperError} <code>requestImage</code> must not be called before the imagery provider is ready.
      */
-    WebMapTileServiceImageryProvider.prototype.requestImage = function(x, y, level) {
+    WebMapTileServiceImageryProvider.prototype.requestImage = function(x, y, level, request) {
         var url = buildImageUrl(this, x, y, level);
-        return ImageryProvider.loadImage(this, url);
+        return ImageryProvider.loadImage(this, url, request);
     };
 
     /**
@@ -458,7 +459,7 @@ define([
      *                   instances.  The array may be empty if no features are found at the given location.
      *                   It may also be undefined if picking is not supported.
      */
-    WebMapTileServiceImageryProvider.prototype.pickFeatures = function() {
+    WebMapTileServiceImageryProvider.prototype.pickFeatures = function(x, y, level, longitude, latitude) {
         return undefined;
     };
 

@@ -71,7 +71,7 @@ define([
      *
      * @see ArcGisMapServerImageryProvider
      * @see BingMapsImageryProvider
-     * @see GoogleEarthImageryProvider
+     * @see GoogleEarthEnterpriseMapsProvider
      * @see createOpenStreetMapImageryProvider
      * @see SingleTileImageryProvider
      * @see createTileMapServiceImageryProvider
@@ -132,7 +132,19 @@ define([
         }
 
         setParameter('layers', options.layers);
-        setParameter('srs', options.tilingScheme instanceof WebMercatorTilingScheme ? 'EPSG:3857' : 'EPSG:4326');
+
+        // Use SRS or CRS based on the WMS version.
+        if (parseFloat(parameters.version) >= 1.3) {
+          // Use CRS with 1.3.0 and going forward.
+          // For GeographicTilingScheme, use CRS:84 vice EPSG:4326 to specify lon, lat (x, y) ordering for
+          // bbox requests.
+          setParameter('crs', options.tilingScheme instanceof WebMercatorTilingScheme ? 'EPSG:3857' : 'CRS:84');
+        }
+        else {
+          // SRS for WMS 1.1.0 or 1.1.1.
+          setParameter('srs', options.tilingScheme instanceof WebMercatorTilingScheme ? 'EPSG:3857' : 'EPSG:4326');
+        }
+
         setParameter('bbox', '{westProjected},{southProjected},{eastProjected},{northProjected}');
         setParameter('width', '{width}');
         setParameter('height', '{height}');
@@ -421,6 +433,7 @@ define([
      * @param {Number} x The tile X coordinate.
      * @param {Number} y The tile Y coordinate.
      * @param {Number} level The tile level.
+     * @param {Request} [request] The request object. Intended for internal use only.
      * @returns {Promise.<Image|Canvas>|undefined} A promise for the image that will resolve when the image is available, or
      *          undefined if there are too many active requests to the server, and the request
      *          should be retried later.  The resolved image may be either an
@@ -428,8 +441,8 @@ define([
      *
      * @exception {DeveloperError} <code>requestImage</code> must not be called before the imagery provider is ready.
      */
-    WebMapServiceImageryProvider.prototype.requestImage = function(x, y, level) {
-        return this._tileProvider.requestImage(x, y, level);
+    WebMapServiceImageryProvider.prototype.requestImage = function(x, y, level, request) {
+        return this._tileProvider.requestImage(x, y, level, request);
     };
 
     /**

@@ -8,6 +8,7 @@ define([
         './defaultValue',
         './defined',
         './defineProperties',
+        './deprecationWarning',
         './DeveloperError',
         './Event',
         './GeographicTilingScheme',
@@ -19,8 +20,10 @@ define([
         './Math',
         './OrientedBoundingBox',
         './QuantizedMeshTerrainData',
+        './Request',
+        './RequestType',
         './TerrainProvider',
-        './throttleRequestByServer',
+        './TileAvailability',
         './TileProviderError'
     ], function(
         Uri,
@@ -31,6 +34,7 @@ define([
         defaultValue,
         defined,
         defineProperties,
+        deprecationWarning,
         DeveloperError,
         Event,
         GeographicTilingScheme,
@@ -42,13 +46,15 @@ define([
         CesiumMath,
         OrientedBoundingBox,
         QuantizedMeshTerrainData,
+        Request,
+        RequestType,
         TerrainProvider,
-        throttleRequestByServer,
+        TileAvailability,
         TileProviderError) {
     'use strict';
 
     /**
-     * A {@link TerrainProvider} that access terrain data in a Cesium terrain format.
+     * A {@link TerrainProvider} that accesses terrain data in a Cesium terrain format.
      * The format is described on the
      * {@link https://github.com/AnalyticalGraphicsInc/cesium/wiki/Cesium-Terrain-Server|Cesium wiki}.
      *
@@ -68,7 +74,7 @@ define([
      * // Construct a terrain provider that uses per vertex normals for lighting
      * // to add shading detail to an imagery provider.
      * var terrainProvider = new Cesium.CesiumTerrainProvider({
-     *     url : 'https://assets.agi.com/stk-terrain/world',
+     *     url : 'https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles',
      *     requestVertexNormals : true
      * });
      *
@@ -136,6 +142,7 @@ define([
         this._requestWaterMask = defaultValue(options.requestWaterMask, false);
 
         this._errorEvent = new Event();
+        this._availability = undefined;
 
         var credit = options.credit;
         if (typeof credit === 'string') {
@@ -199,7 +206,21 @@ define([
                 that._tileUrlTemplates[i] = joinUrls(baseUri, template).toString().replace('{version}', data.version);
             }
 
-            that._availableTiles = data.available;
+            var availableTiles = data.available;
+
+            if (defined(availableTiles)) {
+                that._availability = new TileAvailability(that._tilingScheme, availableTiles.length);
+
+                for (var level = 0; level < availableTiles.length; ++level) {
+                    var rangesAtLevel = availableTiles[level];
+                    var yTiles = that._tilingScheme.getNumberOfYTilesAtLevel(level);
+
+                    for (var rangeIndex = 0; rangeIndex < rangesAtLevel.length; ++rangeIndex) {
+                        var range = rangesAtLevel[rangeIndex];
+                        that._availability.addAvailableTileRange(level, range.startX, yTiles - range.endY - 1, range.endX, yTiles - range.startY - 1);
+                    }
+                }
+            }
 
             if (!defined(that._credit) && defined(data.attribution) && data.attribution !== null) {
                 that._credit = new Credit(data.attribution);
@@ -459,7 +480,7 @@ define([
             southSkirtHeight : skirtHeight,
             eastSkirtHeight : skirtHeight,
             northSkirtHeight : skirtHeight,
-            childTileMask: getChildMaskForTile(provider, level, x, tmsY),
+            childTileMask: provider.availability.computeChildMaskForTile(level, x, y),
             waterMask: waterMaskBuffer
         });
     }
@@ -472,9 +493,8 @@ define([
      * @param {Number} x The X coordinate of the tile for which to request geometry.
      * @param {Number} y The Y coordinate of the tile for which to request geometry.
      * @param {Number} level The level of the tile for which to request geometry.
-     * @param {Boolean} [throttleRequests=true] True if the number of simultaneous requests should be limited,
-     *                  or false if the request should be initiated regardless of the number of requests
-     *                  already in progress.
+     * @param {Request} [request] The request object. Intended for internal use only.
+     *
      * @returns {Promise.<TerrainData>|undefined} A promise for the requested geometry.  If this method
      *          returns undefined instead of a promise, it is an indication that too many requests are already
      *          pending and the request will be retried later.
@@ -482,7 +502,7 @@ define([
      * @exception {DeveloperError} This function must not be called before {@link CesiumTerrainProvider#ready}
      *            returns true.
      */
-    CesiumTerrainProvider.prototype.requestTileGeometry = function(x, y, level, throttleRequests) {
+    CesiumTerrainProvider.prototype.requestTileGeometry = function(x, y, level, request) {
         //>>includeStart('debug', pragmas.debug)
         if (!this._ready) {
             throw new DeveloperError('requestTileGeometry must not be called before the terrain provider is ready.');
@@ -505,27 +525,27 @@ define([
             url = proxy.getURL(url);
         }
 
-        var promise;
-
         var extensionList = [];
         if (this._requestVertexNormals && this._hasVertexNormals) {
-            extensionList.push(this._littleEndianExtensionSize ? "octvertexnormals" : "vertexnormals");
+            extensionList.push(this._littleEndianExtensionSize ? 'octvertexnormals' : 'vertexnormals');
         }
         if (this._requestWaterMask && this._hasWaterMask) {
-            extensionList.push("watermask");
+            extensionList.push('watermask');
         }
 
-        function tileLoader(tileUrl) {
-            return loadArrayBuffer(tileUrl, getRequestHeader(extensionList));
+        if (typeof request === 'boolean') {
+            deprecationWarning('throttleRequests', 'The throttleRequest parameter for requestTileGeometry was deprecated in Cesium 1.35.  It will be removed in 1.37.');
+            request = new Request({
+                throttle : request,
+                throttleByServer : request,
+                type : RequestType.TERRAIN
+            });
         }
-        throttleRequests = defaultValue(throttleRequests, true);
-        if (throttleRequests) {
-            promise = throttleRequestByServer(url, tileLoader);
-            if (!defined(promise)) {
-                return undefined;
-            }
-        } else {
-            promise = tileLoader(url);
+
+        var promise = loadArrayBuffer(url, getRequestHeader(extensionList), request);
+
+        if (!defined(promise)) {
+            return undefined;
         }
 
         var that = this;
@@ -676,6 +696,25 @@ define([
             get : function() {
                 return this._requestWaterMask;
             }
+        },
+
+        /**
+         * Gets an object that can be used to determine availability of terrain from this provider, such as
+         * at points and in rectangles.  This function should not be called before
+         * {@link CesiumTerrainProvider#ready} returns true.  This property may be undefined if availability
+         * information is not available.
+         * @memberof CesiumTerrainProvider.prototype
+         * @type {TileAvailability}
+         */
+        availability : {
+            get : function() {
+                //>>includeStart('debug', pragmas.debug)
+                if (!this._ready) {
+                    throw new DeveloperError('availability must not be called before the terrain provider is ready.');
+                }
+                //>>includeEnd('debug');
+                return this._availability;
+            }
         }
     });
 
@@ -689,40 +728,6 @@ define([
         return this._levelZeroMaximumGeometricError / (1 << level);
     };
 
-    function getChildMaskForTile(terrainProvider, level, x, y) {
-        var available = terrainProvider._availableTiles;
-        if (!available || available.length === 0) {
-            return 15;
-        }
-
-        var childLevel = level + 1;
-        if (childLevel >= available.length) {
-            return 0;
-        }
-
-        var levelAvailable = available[childLevel];
-
-        var mask = 0;
-
-        mask |= isTileInRange(levelAvailable, 2 * x, 2 * y) ? 1 : 0;
-        mask |= isTileInRange(levelAvailable, 2 * x + 1, 2 * y) ? 2 : 0;
-        mask |= isTileInRange(levelAvailable, 2 * x, 2 * y + 1) ? 4 : 0;
-        mask |= isTileInRange(levelAvailable, 2 * x + 1, 2 * y + 1) ? 8 : 0;
-
-        return mask;
-    }
-
-    function isTileInRange(levelAvailable, x, y) {
-        for (var i = 0, len = levelAvailable.length; i < len; ++i) {
-            var range = levelAvailable[i];
-            if (x >= range.startX && x <= range.endX && y >= range.startY && y <= range.endY) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * Determines whether data for a tile is available to be loaded.
      *
@@ -732,19 +737,10 @@ define([
      * @returns {Boolean} Undefined if not supported, otherwise true or false.
      */
     CesiumTerrainProvider.prototype.getTileDataAvailable = function(x, y, level) {
-        var available = this._availableTiles;
-
-        if (!available || available.length === 0) {
+        if (!defined(this.availability)) {
             return undefined;
-        } else {
-            if (level >= available.length) {
-                return false;
-            }
-            var levelAvailable = available[level];
-            var yTiles = this._tilingScheme.getNumberOfYTilesAtLevel(level);
-            var tmsY = (yTiles - y - 1);
-            return isTileInRange(levelAvailable, x, tmsY);
         }
+        return this.availability.isTileAvailable(level, x, y);
     };
 
     return CesiumTerrainProvider;

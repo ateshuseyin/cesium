@@ -16,11 +16,13 @@ Thumbs.db
 /Source/Shaders/*.js
 /Source/Shaders/*/*.js
 /Source/Shaders/*/*/*.js
+/Source/ThirdParty/Shaders/*.js
 
 /Specs/SpecList.js
 
 /node_modules
 npm-debug.log
+npm-debug.log.*
 
 # WebStorm user-specific
 .idea/workspace.xml

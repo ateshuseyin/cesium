@@ -1,7 +1,6 @@
+/*eslint-env node*/
+'use strict';
 (function() {
-    'use strict';
-    /*jshint node:true*/
-
     var express = require('express');
     var compression = require('compression');
     var url = require('url');
@@ -40,13 +39,20 @@
     var mime = express.static.mime;
     mime.define({
         'application/json' : ['czml', 'json', 'geojson', 'topojson'],
-        'model/vnd.gltf+json' : ['gltf'],
-        'model/vnd.gltf.binary' : ['bgltf', 'glb'],
+        'image/crn' : ['crn'],
+        'image/ktx' : ['ktx'],
+        'model/gltf+json' : ['gltf'],
+        'model/gltf-binary' : ['bgltf', 'glb'],
         'text/plain' : ['glsl']
     });
 
     var app = express();
     app.use(compression());
+    app.use(function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
+    });
     app.use(express.static(__dirname));
 
     function getRemoteUrlFromParam(req) {

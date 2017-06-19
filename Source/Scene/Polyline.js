@@ -41,6 +41,7 @@ define([
      * @param {Cartesian3[]} [options.positions] The positions.
      * @param {Object} [options.id] The user-defined object to be returned when this polyline is picked.
      * @param {DistanceDisplayCondition} [options.distanceDisplayCondition] The condition specifying at what distance from the camera that this polyline will be displayed.
+     * @param {PolylineCollection} polylineCollection The renderable polyline collection.
      *
      * @see PolylineCollection
      *
@@ -334,7 +335,7 @@ define([
             this._boundingVolumeWC = BoundingSphere.transform(this._boundingVolume, modelMatrix, this._boundingVolumeWC);
         }
 
-        this._modelMatrix = modelMatrix;
+        this._modelMatrix = Matrix4.clone(modelMatrix, this._modelMatrix);
 
         if (this._segments.positions.length !== segmentPositionsLength) {
             // number of positions changed

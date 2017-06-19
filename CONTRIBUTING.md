@@ -52,8 +52,8 @@ We love pull requests.  We strive to promptly review them, provide feedback, and
 
 Before we can merge a pull request, we require a signed Contributor License Agreement.  There is a CLA for:
 
-* [individuals](http://www.agi.com/licenses/individual-cla-agi-v1.0.txt) and 
-* [corporations](http://www.agi.com/licenses/corporate-cla-agi-v1.0.txt).
+* [individuals](Documentation/Contributors/CLAs/individual-cla-agi-v1.0.txt) and
+* [corporations](Documentation/Contributors/CLAs/corporate-cla-agi-v1.0.txt).
 
 This only needs to be completed once.  The CLA ensures you retain copyright to your contributions, and we have the right to use them and incorporate them into Cesium using the [Apache 2.0 License](LICENSE.md).
 
@@ -65,13 +65,14 @@ Our code is our lifeblood so maintaining Cesium's high code quality is important
 
 * Review the [Contributor Guides](Documentation/Contributors/README.md).  In addition to Cesium-specific topics, they contain a lot of general software development best practices.
 * If this is your first contribution to Cesium, add your name to [CONTRIBUTORS.md](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/CONTRIBUTORS.md).
+* For an overview of our workflow see [github pull request workflows](http://cesiumjs.org/2013/10/08/GitHub-Pull-Request-Workflows/).
 * Pull request tips
    * If your pull request fixes an existing issue, include a link to the issue in the description (like this: [#1](https://github.com/AnalyticalGraphicsInc/cesium/issues/1)).  Likewise, if your pull request fixes an issue reported on the Cesium forum, include a link to the thread.
    * If your pull request needs additional work, include a [task list](https://github.com/blog/1375%0A-task-lists-in-gfm-issues-pulls-comments).
    * Once you are done making new commits to address feedback, add a comment to the pull request such as `"this is ready"` since GitHub doesn't notify us about commits.
 * Code and tests
    * Follow the [Coding Guide](Documentation/Contributors/CodingGuide/README.md).
-   * Verify your code passes [JSHint](http://www.jshint.com/).  Run JSHint for all of Cesium with `npm run jsHint` or automatically run JSHint when files are saved with `npm run jsHint-watch`.  See the [Build Guide](Documentation/Contributors/BuildGuide/README.md).
+   * Verify your code passes [ESLint](http://www.eslint.org/).  Run ESLint for all of Cesium with `npm run eslint` or automatically run ESLint when files are saved with `npm run eslint-watch`.  See the [Build Guide](Documentation/Contributors/BuildGuide/README.md).
    * Verify that all tests pass, and write new tests with excellent code coverage for new code.  Follow the [Testing Guide](Documentation/Contributors/TestingGuide/README.md).
    * If you added new identifiers to the Cesium API:
       * Update [CHANGES.md](CHANGES.md).
