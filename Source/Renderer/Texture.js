@@ -198,7 +198,7 @@ define([
             sizeInBytes = PixelFormat.textureSizeInBytes(pixelFormat, pixelDatatype, width, height);
         }
 
-        this._id = 'Texture_' + currentId++;
+        this._id = currentId++;
         this._context = context;
         this._textureFilterAnisotropic = context._textureFilterAnisotropic;
         this._textureTarget = textureTarget;
@@ -312,11 +312,16 @@ define([
 
     defineProperties(Texture.prototype, {
 
+        /**
+         * An auto generated unique identifier for this object.
+         * @private
+         */
         id : {
             get : function() {
                 return this._id;
             }
         },
+
         /**
          * The sampler to use when sampling this texture.
          * Create a sampler by calling {@link Sampler}.  If this
