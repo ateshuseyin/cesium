@@ -955,7 +955,7 @@ define([
                 if (isLamAlefChar(ch)) {
                     ++lacount;
                 }
-                dest[i] = convertFEto06[ch - 0xFE70];  //TODO
+                dest[i] = convertFEto06[ch - 0xFE70];
             }
         }
         return lacount;
@@ -1244,8 +1244,6 @@ define([
         return outputSize;
     }
 
-
-
     /**
      * Shape Arabic text on a character basis.
      *
@@ -1288,10 +1286,21 @@ define([
      * text.</p>
      * @stable ICU 2.0
      *
-     * @hide
+     * @private
      */
     function ArabicShaping(options) {
-        this._options = options;
+        this.options = options;
+        if ((this.options & DIGITS_MASK) > 0x80) {
+            throw new DeveloperError("bad DIGITS options");
+        }
+        this.isLogical = ((this.options & TEXT_DIRECTION_MASK) === TEXT_DIRECTION_LOGICAL);
+        /* Validate options */
+        this.spacesRelativeToTextBeginEnd = ((this.options & SPACES_RELATIVE_TO_TEXT_MASK) === SPACES_RELATIVE_TO_TEXT_BEGIN_END);
+        if ((this.options & SHAPE_TAIL_TYPE_MASK) === SHAPE_TAIL_NEW_UNICODE) {
+            this.tailChar = NEW_TAIL_CHAR;
+        } else {
+            this.tailChar = OLD_TAIL_CHAR;
+        }
     }
 
     //public static functions
@@ -1738,14 +1747,15 @@ define([
         if (source === null) {
             throw new DeveloperError("source can not be null");
         }
-        if (sourceStart < 0 || sourceLength < 0 || sourceStart + sourceLength > source.length) {
+
+        if (sourceStart < 0 || sourceLength < 0 ) {
             throw new DeveloperError("bad source start (" + sourceStart + ") or length (" + sourceLength + ") for buffer of length " + source.length);
         }
         if (dest === null && destSize !== 0) {
             throw new DeveloperError("null dest requires destSize === 0");
         }
-        if ((destSize !== 0) &&
-            (destStart < 0 || destSize < 0 || destStart + destSize > dest.length)) {
+
+        if ((destSize !== 0) && (destStart < 0 || destSize < 0)) {
             throw new DeveloperError("bad dest start (" + destStart + ") or size (" + destSize + ") for buffer of length " + dest.length);
         }        /* Validate input options */
         if (((this.options & TASHKEEL_MASK) > 0) &&

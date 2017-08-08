@@ -14,6 +14,7 @@ define([
         './HeightReference',
         './HorizontalOrigin',
         './LabelStyle',
+        './processArabicText',
         './VerticalOrigin'
     ], function(
         BoundingRectangle,
@@ -30,6 +31,7 @@ define([
         HeightReference,
         HorizontalOrigin,
         LabelStyle,
+        processArabicText,
         VerticalOrigin) {
     'use strict';
 
@@ -86,7 +88,8 @@ define([
         }
         //>>includeEnd('debug');
 
-        this._text = defaultValue(options.text, '');
+        this._originalText = defaultValue(options.text, '');
+        this._text = defaultValue(processArabicText(options.text), '');
         this._show = defaultValue(options.show, true);
         this._font = defaultValue(options.font, '30px sans-serif');
         this._fillColor = Color.clone(defaultValue(options.fillColor, Color.WHITE));
@@ -257,8 +260,9 @@ define([
                 }
                 //>>includeEnd('debug');
 
-                if (this._text !== value) {
-                    this._text = value;
+                if (this._originalText !== value) {
+                    this._originalText = value;
+                    this._text = processArabicText(value);
                     rebindAllGlyphs(this);
                 }
             }
